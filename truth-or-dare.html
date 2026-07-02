@@ -1,0 +1,921 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>🎭 真心话大冒险</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --pink: #FF6B9D;
+  --purple: #C471F5;
+  --blue: #6BC5FF;
+  --yellow: #FFD93D;
+  --green: #6BCB77;
+  --bg-start: #FFE4EC;
+  --bg-end: #E8D5F5;
+  --card-bg: #FFF5F9;
+  --text: #4A3060;
+  --shadow: 0 8px 32px rgba(180,120,200,0.25);
+}
+
+body {
+  font-family: 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+  background: linear-gradient(135deg, #FFE4EC 0%, #E8D5F5 30%, #D5ECFF 60%, #FFF5DF 100%);
+  background-size: 400% 400%;
+  animation: bgShift 12s ease infinite;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+  position: relative;
+}
+
+@keyframes bgShift {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+/* ===== Floating Particles ===== */
+.particles {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  pointer-events: none;
+  z-index: 0;
+}
+.particle {
+  position: absolute;
+  animation: floatUp linear infinite;
+  opacity: 0.7;
+  font-size: 24px;
+}
+@keyframes floatUp {
+  0% { transform: translateY(105vh) rotate(0deg) scale(0); opacity: 0; }
+  10% { opacity: 0.7; }
+  90% { opacity: 0.7; }
+  100% { transform: translateY(-10vh) rotate(360deg) scale(1.2); opacity: 0; }
+}
+
+/* ===== Main Container ===== */
+.phone {
+  position: relative;
+  z-index: 1;
+  width: 390px;
+  max-width: 95vw;
+  min-height: 750px;
+  background: rgba(255,255,255,0.55);
+  backdrop-filter: blur(20px);
+  border-radius: 40px;
+  box-shadow: 0 20px 60px rgba(150,100,180,0.3), inset 0 1px 0 rgba(255,255,255,0.6);
+  padding: 30px 24px 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  border: 2px solid rgba(255,255,255,0.8);
+}
+
+/* ===== Header ===== */
+.header {
+  text-align: center;
+  margin-bottom: 16px;
+}
+.header .icon {
+  font-size: 48px;
+  animation: bounce 1.2s ease-in-out infinite;
+}
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-12px); }
+}
+.header h1 {
+  font-size: 28px;
+  font-weight: 800;
+  background: linear-gradient(135deg, var(--pink), var(--purple));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin: 4px 0;
+  letter-spacing: 2px;
+}
+
+/* ===== Difficulty Tabs ===== */
+.diff-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+.diff-tab {
+  padding: 8px 18px;
+  border-radius: 20px;
+  border: 2px solid #E8D5F5;
+  background: rgba(255,255,255,0.6);
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+  user-select: none;
+}
+.diff-tab.active {
+  background: linear-gradient(135deg, var(--pink), var(--purple));
+  color: #fff;
+  border-color: transparent;
+  box-shadow: 0 4px 15px rgba(196,113,245,0.4);
+}
+
+/* ===== Wheel Section ===== */
+.wheel-wrapper {
+  position: relative;
+  margin-bottom: 20px;
+}
+.wheel-pointer {
+  position: absolute;
+  top: -18px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 5;
+  font-size: 32px;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.15));
+  animation: pointerPulse 1.5s ease-in-out infinite;
+}
+@keyframes pointerPulse {
+  0%, 100% { transform: translateX(-50%) scale(1); }
+  50% { transform: translateX(-50%) scale(1.15); }
+}
+.wheel-pointer.spinning { animation: none; }
+canvas#wheelCanvas {
+  display: block;
+  filter: drop-shadow(0 4px 16px rgba(180,120,200,0.3));
+}
+
+/* ===== Card Section ===== */
+.card-scene {
+  perspective: 800px;
+  width: 100%;
+  max-width: 300px;
+  height: 180px;
+  margin-bottom: 20px;
+}
+.card {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  transform-style: preserve-3d;
+  transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+}
+.card.flipped { transform: rotateY(180deg); }
+.card-face {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  backface-visibility: hidden;
+  border-radius: 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  text-align: center;
+}
+.card-front {
+  background: linear-gradient(135deg, #FFF5F9, #F8E8FF);
+  border: 3px dashed #E8C8F0;
+  box-shadow: var(--shadow);
+}
+.card-front .question-mark {
+  font-size: 56px;
+  animation: float 2s ease-in-out infinite;
+}
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+.card-front .hint {
+  font-size: 14px;
+  color: #B8A0C8;
+  margin-top: 8px;
+}
+.card-back {
+  background: linear-gradient(135deg, #FFF0F5, #FAF0FF);
+  border: 3px solid #F0C8E8;
+  box-shadow: var(--shadow);
+  transform: rotateY(180deg);
+  overflow-y: auto;
+}
+.card-back .type-badge {
+  display: inline-block;
+  padding: 4px 14px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 10px;
+}
+.type-badge.truth { background: linear-gradient(135deg, var(--pink), #FF8FB3); }
+.type-badge.dare { background: linear-gradient(135deg, var(--purple), #A855F7); }
+.card-back .question-text {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1.5;
+}
+
+/* ===== Spin Button ===== */
+.btn-spin {
+  width: 160px;
+  height: 52px;
+  border-radius: 26px;
+  border: none;
+  background: linear-gradient(135deg, var(--pink), var(--purple));
+  color: #fff;
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: 2px;
+  cursor: pointer;
+  box-shadow: 0 6px 24px rgba(196,113,245,0.45);
+  transition: all 0.3s;
+  position: relative;
+  overflow: hidden;
+}
+.btn-spin:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(196,113,245,0.55); }
+.btn-spin:active { transform: scale(0.95); }
+.btn-spin:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+.btn-spin::after {
+  content: '';
+  position: absolute;
+  top: -50%; left: -50%;
+  width: 200%; height: 200%;
+  background: linear-gradient(45deg, transparent 40%, rgba(255,255,255,0.3) 50%, transparent 60%);
+  animation: shimmer 2s infinite;
+}
+@keyframes shimmer {
+  0% { transform: translateX(-100%) rotate(45deg); }
+  100% { transform: translateX(100%) rotate(45deg); }
+}
+
+/* ===== Footer Stats ===== */
+.footer {
+  margin-top: auto;
+  display: flex;
+  gap: 20px;
+  align-items: center;
+  color: #B8A0C8;
+  font-size: 14px;
+  font-weight: 600;
+}
+.stat {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.stat .num {
+  color: var(--pink);
+  font-size: 20px;
+  font-weight: 800;
+}
+
+/* ===== Name Input Modal ===== */
+.modal-overlay {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: rgba(0,0,0,0.4);
+  backdrop-filter: blur(4px);
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.modal {
+  background: white;
+  border-radius: 28px;
+  padding: 30px 24px;
+  width: 320px;
+  max-width: 90vw;
+  text-align: center;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+}
+.modal h3 {
+  font-size: 22px;
+  color: var(--text);
+  margin-bottom: 6px;
+}
+.modal p {
+  font-size: 13px;
+  color: #B8A0C8;
+  margin-bottom: 16px;
+}
+.modal input {
+  width: 100%;
+  padding: 12px 16px;
+  border-radius: 16px;
+  border: 2px solid #E8D5F5;
+  font-size: 16px;
+  outline: none;
+  text-align: center;
+  transition: border-color 0.3s;
+}
+.modal input:focus { border-color: var(--purple); }
+.modal .btn-start {
+  margin-top: 16px;
+  width: 100%;
+  height: 48px;
+  border-radius: 24px;
+  border: none;
+  background: linear-gradient(135deg, var(--pink), var(--purple));
+  color: #fff;
+  font-size: 18px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(196,113,245,0.4);
+  transition: all 0.3s;
+}
+.modal .btn-start:active { transform: scale(0.95); }
+
+/* ===== Responsive ===== */
+@media (max-width: 420px) {
+  .phone {
+    width: 100vw;
+    max-width: 100vw;
+    min-height: 100vh;
+    border-radius: 0;
+    padding: 20px 16px 16px;
+  }
+  .card-scene { height: 160px; }
+  .header h1 { font-size: 24px; }
+}
+
+/* ===== Countdown overlay ===== */
+.countdown-overlay {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+  pointer-events: none;
+}
+.countdown-num {
+  font-size: 120px;
+  font-weight: 900;
+  color: var(--pink);
+  text-shadow: 0 8px 32px rgba(255,107,157,0.5);
+  animation: countPop 0.6s ease-out forwards;
+}
+@keyframes countPop {
+  0% { transform: scale(2); opacity: 0; }
+  50% { opacity: 1; }
+  100% { transform: scale(1); opacity: 0; }
+}
+
+/* ===== Toast ===== */
+.toast {
+  position: fixed;
+  top: 60px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: white;
+  padding: 12px 24px;
+  border-radius: 20px;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  z-index: 300;
+  animation: toastIn 0.4s ease-out, toastOut 0.4s ease-in 1.6s forwards;
+}
+@keyframes toastIn { from { opacity: 0; transform: translateX(-50%) translateY(-20px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }
+@keyframes toastOut { from { opacity: 1; } to { opacity: 0; transform: translateX(-50%) translateY(-20px); } }
+</style>
+</head>
+<body>
+
+<!-- Floating particles -->
+<div class="particles" id="particles"></div>
+
+<!-- Phone container -->
+<div class="phone" id="phone">
+  <div class="header">
+    <div class="icon">🎭</div>
+    <h1>真心话大冒险</h1>
+  </div>
+
+  <div class="diff-tabs">
+    <div class="diff-tab active" data-diff="easy">🌸 轻松</div>
+    <div class="diff-tab" data-diff="spicy">🌶️ 刺激</div>
+    <div class="diff-tab" data-diff="mixed">🎰 混合</div>
+  </div>
+
+  <div class="wheel-wrapper">
+    <div class="wheel-pointer" id="pointer">📍</div>
+    <canvas id="wheelCanvas" width="240" height="240"></canvas>
+  </div>
+
+  <div class="card-scene">
+    <div class="card" id="card">
+      <div class="card-face card-front">
+        <div class="question-mark">❓</div>
+        <div class="hint">点击转盘开始游戏</div>
+      </div>
+      <div class="card-face card-back" id="cardBack">
+        <div class="type-badge truth" id="typeBadge">真心话</div>
+        <div class="question-text" id="questionText">说出你最近做过最尴尬的一件事</div>
+      </div>
+    </div>
+  </div>
+
+  <button class="btn-spin" id="btnSpin" onclick="spinWheel()">🎯 转动转盘</button>
+
+  <div class="footer">
+    <div class="stat">🔄 第 <span class="num" id="roundNum">0</span> 轮</div>
+    <div class="stat">💬 <span class="num" id="truthCount">0</span> 真心话</div>
+    <div class="stat">⚡ <span class="num" id="dareCount">0</span> 大冒险</div>
+  </div>
+</div>
+
+<!-- Start modal -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <h3>🎭 欢迎来玩！</h3>
+    <p>输入你的名字，开始真心话大冒险吧～</p>
+    <input type="text" id="playerName" placeholder="输入你的名字" maxlength="10" autofocus>
+    <button class="btn-start" onclick="startGame()">✨ 开始游戏</button>
+  </div>
+</div>
+
+<script>
+// ===== Audio Engine =====
+const AudioCtx = window.AudioContext || window.webkitAudioContext;
+let audioCtx;
+
+function initAudio() {
+  if (!audioCtx) audioCtx = new AudioCtx();
+}
+
+function playBeep(freq, dur, type='sine', vol=0.08) {
+  if (!audioCtx) return;
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.type = type;
+  osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+  gain.gain.setValueAtTime(vol, audioCtx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + dur);
+  osc.connect(gain); gain.connect(audioCtx.destination);
+  osc.start(); osc.stop(audioCtx.currentTime + dur);
+}
+
+function playSpinSound() {
+  for (let i = 0; i < 8; i++) {
+    setTimeout(() => playBeep(400 + i * 80, 0.08, 'square', 0.04), i * 60);
+  }
+}
+
+function playRevealSound() {
+  playBeep(600, 0.15, 'sine', 0.1);
+  setTimeout(() => playBeep(900, 0.2, 'sine', 0.1), 150);
+}
+
+// ===== Question Bank =====
+const questions = {
+  easy: {
+    truth: [
+      '你最近一次说谎是什么时候？',
+      '你手机里最不想让人看到的 App 是什么？',
+      '上学时你最讨厌哪门课？',
+      '你做过最尴尬的一件事是什么？',
+      '你小时候的梦想职业是什么？',
+      '你最害怕什么东西？',
+      '你最近一次哭是因为什么？',
+      '你觉得自己最可爱的特点是什么？',
+      '你最拿手的菜是什么？',
+      '如果不考虑钱，你最想做什么工作？',
+      '你最近单曲循环的歌是哪首？',
+      '你最想拥有的超能力是什么？',
+      '你有什么奇怪的小癖好？',
+      '上学时有没有给同学起过外号？',
+      '你觉得自己像哪种动物？',
+      '如果明天是世界末日，你今天会做什么？',
+      '你收到过最难忘的礼物是什么？',
+      '你最想去哪个国家旅游？',
+      '你第一次暗恋的人是什么类型的？',
+      '你有什么隐藏技能？',
+      '你最常说的口头禅是什么？',
+      '如果变成透明人，你最想做什么？',
+      '你最引以为豪的一件事是什么？',
+      '如果可以和任何名人共进晚餐，你选谁？',
+      '你做过最勇敢的一件事是什么？',
+    ],
+    dare: [
+      '模仿一种动物叫，录下来发给朋友',
+      '用唱歌的方式说出你最近吃过的三顿饭',
+      '对着镜子大喊三声"我是最棒的"',
+      '用奇怪的腔调朗诵一首古诗',
+      '做10个深蹲，边做边唱《小苹果》',
+      '闭着眼睛原地转5圈，然后走直线',
+      '用方言说一段绕口令',
+      '模仿你最喜欢的明星说一句话',
+      '用倒立姿势（靠墙）保持10秒',
+      '对在场的每个人说一句真诚的赞美',
+      '做出你最丑的鬼脸，保持10秒',
+      '用左手写自己的名字',
+      '金鸡独立站30秒，同时唱一首歌',
+      '做出三个不同的瑜伽姿势',
+      '一口气说完26个英文字母倒着念',
+      '用嘴巴发出放屁的声音（bushi）',
+      '假装自己是天气预报员，播报明天的天气',
+      '做一个你最擅长的舞蹈动作',
+      '给手机里最近联系人发"我爱你"（慎选）',
+      '模仿机器人走路绕房间一圈',
+      '用三个不同的声调说"我是大帅哥/大美女"',
+      '原地高抬腿跑15秒',
+      '做出你最性感的表情（忍住不笑）',
+      '唱一首儿歌，要带动作',
+      '闭眼画一只猪，然后给大家看',
+    ],
+  },
+  spicy: {
+    truth: [
+      '你做过最疯狂的一件事是什么？',
+      '有没有偷偷看过别人的手机？',
+      '你最不想让爸妈知道的一件事？',
+      '如果可以和在场任意一人接吻，你会选谁？',
+      '你最多同时和几个人暧昧过？',
+      '说一个你从来没有告诉过任何人的秘密',
+      '你有没有偷偷喜欢过朋友的对象？',
+      '你觉得自己最丢脸的一个瞬间？',
+      '你在恋爱中做过最卑微的事？',
+      '有没有在公共场合放过很臭的屁然后装作没事？',
+      '你最想删除的一段记忆是什么？',
+      '你喝醉后做过什么离谱的事？',
+      '有没有在背后说过朋友坏话？',
+      '你最想尝试但一直不敢做的事？',
+      '你觉得自己谈过几次真正的恋爱？',
+      '有没有翻过对象的聊天记录？',
+      '你上次心动是因为什么？',
+      '说一个你至今后悔的决定',
+      '你觉得自己最绿茶/最渣的一个行为？',
+      '有没有做过什么违法的小事？（闯红灯也算）',
+    ],
+    dare: [
+      '给最近通话的人打电话说"我想你了"然后挂掉',
+      '把朋友圈头像换成最丑的一张自拍，保持10分钟',
+      '用最嗲的声音念一段商品说明书',
+      '跳一段热舞（不会跳也要乱扭）',
+      '给你暗恋过的人发一句"最近还好吗"',
+      '用屁股在空中写出你的名字',
+      '模仿土味视频里的经典台词',
+      '给在场的一个人喂一口吃的',
+      '把手机给左边的人，让他翻30秒',
+      '在朋友圈发"我今天好美/好帅"不配图，保持5分钟',
+      '和你右边的人十指相扣10秒',
+      '做10个俯卧撑（做不了就10个仰卧起坐）',
+      '用英文和你旁边的人对话1分钟',
+      '现在立刻换一件反着穿的衣服，保持一轮',
+      '做出你最撩人的 wink，让大家打分',
+      '用最夸张的方式大笑10秒',
+      '和你对面的人对视30秒不许笑',
+      '走T台秀绕场一圈',
+      '给一个共同好友发语音说你梦到ta了',
+      '用屁股写字，让大家猜是什么字',
+    ],
+  },
+};
+
+// ===== Game State =====
+let playerName = '';
+let difficulty = 'easy';
+let isSpinning = false;
+let currentType = ''; // 'truth' | 'dare'
+let roundCount = 0;
+let truthCount = 0;
+let dareCount = 0;
+let currentQuestions = null; // reference to current question arrays
+
+// ===== Init =====
+const canvas = document.getElementById('wheelCanvas');
+const ctx = canvas.getContext('2d');
+const segments = [
+  { label: '真心话', color: '#FF6B9D', emoji: '💬' },
+  { label: '大冒险', color: '#C471F5', emoji: '⚡' },
+  { label: '真心话', color: '#FF8FB3', emoji: '💬' },
+  { label: '大冒险', color: '#A855F7', emoji: '⚡' },
+  { label: '真心话', color: '#FF6B9D', emoji: '💬' },
+  { label: '大冒险', color: '#C471F5', emoji: '⚡' },
+];
+const segAngle = (2 * Math.PI) / segments.length;
+let wheelRotation = 0;
+let spinAnimationId = null;
+
+function drawWheel(rotation) {
+  const cx = canvas.width / 2;
+  const cy = canvas.height / 2;
+  const r = 110;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  // Outer glow
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(cx, cy, r + 8, 0, 2 * Math.PI);
+  ctx.fillStyle = 'rgba(200,160,220,0.3)';
+  ctx.fill();
+  ctx.restore();
+
+  // Segments
+  segments.forEach((seg, i) => {
+    const startAngle = rotation + i * segAngle;
+    const endAngle = startAngle + segAngle;
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.arc(cx, cy, r, startAngle, endAngle);
+    ctx.closePath();
+    ctx.fillStyle = seg.color;
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(255,255,255,0.5)';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    // Label
+    const midAngle = startAngle + segAngle / 2;
+    const lx = cx + Math.cos(midAngle) * (r * 0.6);
+    const ly = cy + Math.sin(midAngle) * (r * 0.6);
+    ctx.save();
+    ctx.translate(lx, ly);
+    ctx.rotate(midAngle + Math.PI / 2);
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 13px "PingFang SC","Microsoft YaHei",sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(seg.emoji, 0, -6);
+    ctx.fillText(seg.label, 0, 14);
+    ctx.restore();
+  });
+
+  // Center circle
+  ctx.beginPath();
+  ctx.arc(cx, cy, 28, 0, 2 * Math.PI);
+  const grad = ctx.createLinearGradient(cx - 28, cy - 28, cx + 28, cy + 28);
+  grad.addColorStop(0, '#FF6B9D');
+  grad.addColorStop(1, '#C471F5');
+  ctx.fillStyle = grad;
+  ctx.fill();
+  ctx.fillStyle = '#fff';
+  ctx.font = 'bold 12px "PingFang SC","Microsoft YaHei",sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('GO', cx, cy);
+
+  // Outer dots
+  for (let i = 0; i < 12; i++) {
+    const angle = (i / 12) * 2 * Math.PI;
+    const dx = cx + Math.cos(angle) * (r + 4);
+    const dy = cy + Math.sin(angle) * (r + 4);
+    ctx.beginPath();
+    ctx.arc(dx, dy, 3, 0, 2 * Math.PI);
+    ctx.fillStyle = i % 2 === 0 ? '#FFD93D' : '#FFF';
+    ctx.fill();
+  }
+}
+
+function getSelectedSegment(rotation) {
+  // Pointer is at the TOP (12 o'clock = -PI/2)
+  const pointerAngle = -Math.PI / 2;
+  let norm = (pointerAngle - rotation) % (2 * Math.PI);
+  if (norm < 0) norm += 2 * Math.PI;
+  const idx = Math.floor(norm / segAngle) % segments.length;
+  return segments[idx];
+}
+
+// Initial draw
+drawWheel(0);
+
+// ===== Diff tabs =====
+document.querySelectorAll('.diff-tab').forEach(tab => {
+  tab.addEventListener('click', function() {
+    document.querySelectorAll('.diff-tab').forEach(t => t.classList.remove('active'));
+    this.classList.add('active');
+    difficulty = this.dataset.diff;
+    loadQuestions();
+  });
+});
+
+function loadQuestions() {
+  if (difficulty === 'mixed') {
+    currentQuestions = {
+      truth: [...questions.easy.truth, ...questions.spicy.truth],
+      dare: [...questions.easy.dare, ...questions.spicy.dare],
+    };
+  } else {
+    currentQuestions = questions[difficulty];
+  }
+}
+loadQuestions();
+
+// ===== Particles =====
+const particlesContainer = document.getElementById('particles');
+const particleEmojis = ['✨', '⭐', '💖', '🌸', '🦋', '💫', '🎀', '🍬', '💝', '🌈', '🫧', '💕'];
+
+function createParticle() {
+  const el = document.createElement('span');
+  el.className = 'particle';
+  el.textContent = particleEmojis[Math.floor(Math.random() * particleEmojis.length)];
+  el.style.left = Math.random() * 100 + '%';
+  el.style.fontSize = (16 + Math.random() * 24) + 'px';
+  el.style.animationDuration = (8 + Math.random() * 12) + 's';
+  el.style.animationDelay = Math.random() * 8 + 's';
+  particlesContainer.appendChild(el);
+
+  el.addEventListener('animationend', () => {
+    el.remove();
+    createParticle();
+  });
+}
+
+// Seed initial particles
+for (let i = 0; i < 18; i++) {
+  const el = document.createElement('span');
+  el.className = 'particle';
+  el.textContent = particleEmojis[Math.floor(Math.random() * particleEmojis.length)];
+  el.style.left = Math.random() * 100 + '%';
+  el.style.fontSize = (16 + Math.random() * 24) + 'px';
+  el.style.animationDuration = (8 + Math.random() * 12) + 's';
+  el.style.animationDelay = Math.random() * 12 + 's';
+  particlesContainer.appendChild(el);
+  el.addEventListener('animationend', () => { el.remove(); createParticle(); });
+}
+
+// ===== Modal =====
+function startGame() {
+  const input = document.getElementById('playerName');
+  const name = input.value.trim();
+  if (!name) {
+    input.style.borderColor = '#FF6B9D';
+    input.placeholder = '先输入名字再开始哦～';
+    input.focus();
+    setTimeout(() => { input.style.borderColor = '#E8D5F5'; }, 1500);
+    return;
+  }
+  playerName = name;
+  initAudio();
+  document.getElementById('modalOverlay').style.display = 'none';
+  showToast(`👋 欢迎 ${playerName}！点击转盘开始吧～`);
+}
+
+// ===== Toast =====
+function showToast(msg) {
+  const old = document.querySelector('.toast');
+  if (old) old.remove();
+  const el = document.createElement('div');
+  el.className = 'toast';
+  el.textContent = msg;
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 2200);
+}
+
+// ===== Countdown =====
+function showCountdown(callback) {
+  let count = 3;
+  function show() {
+    if (count <= 0) { callback(); return; }
+    const overlay = document.createElement('div');
+    overlay.className = 'countdown-overlay';
+    const num = document.createElement('div');
+    num.className = 'countdown-num';
+    num.textContent = count;
+    overlay.appendChild(num);
+    document.body.appendChild(overlay);
+    playBeep(800, 0.15, 'sine', 0.06);
+    setTimeout(() => {
+      overlay.remove();
+      count--;
+      show();
+    }, 600);
+  }
+  show();
+}
+
+// ===== Spin Wheel =====
+function spinWheel() {
+  if (isSpinning) return;
+  if (!playerName) {
+    document.getElementById('modalOverlay').style.display = 'flex';
+    document.getElementById('playerName').focus();
+    return;
+  }
+
+  isSpinning = true;
+  const btn = document.getElementById('btnSpin');
+  btn.disabled = true;
+  btn.textContent = '🌀 旋转中...';
+
+  const pointer = document.getElementById('pointer');
+  pointer.classList.add('spinning');
+
+  // Reset card
+  const card = document.getElementById('card');
+  card.classList.remove('flipped');
+
+  initAudio();
+  playSpinSound();
+
+  // Random target segment (ensure it spins many rounds)
+  const targetIdx = Math.floor(Math.random() * segments.length);
+  // Calculate rotation to land on targetIdx
+  const pointerAngle = -Math.PI / 2;
+  const targetMidAngle = targetIdx * segAngle + segAngle / 2;
+  const extraSpins = (4 + Math.floor(Math.random() * 3)) * 2 * Math.PI;
+  const targetRotation = extraSpins + (2 * Math.PI - targetMidAngle + pointerAngle);
+
+  const startRotation = wheelRotation;
+  const duration = 3000; // 3 seconds spin
+  const startTime = performance.now();
+
+  function animate(now) {
+    const elapsed = now - startTime;
+    const progress = Math.min(elapsed / duration, 1);
+    // Ease out cubic
+    const eased = 1 - Math.pow(1 - progress, 3);
+    wheelRotation = startRotation + targetRotation * eased;
+    drawWheel(wheelRotation);
+
+    if (progress < 1) {
+      spinAnimationId = requestAnimationFrame(animate);
+    } else {
+      // Spin complete
+      pointer.classList.remove('spinning');
+      const seg = getSelectedSegment(wheelRotation);
+      currentType = seg.label === '真心话' ? 'truth' : 'dare';
+      revealQuestion();
+      isSpinning = false;
+      btn.disabled = false;
+      btn.textContent = '🎯 再转一次';
+    }
+  }
+
+  spinAnimationId = requestAnimationFrame(animate);
+}
+
+// ===== Reveal Question =====
+function revealQuestion() {
+  const pool = currentQuestions[currentType];
+  const question = pool[Math.floor(Math.random() * pool.length)];
+
+  // Update card back
+  const badge = document.getElementById('typeBadge');
+  badge.textContent = currentType === 'truth' ? '💬 真心话' : '⚡ 大冒险';
+  badge.className = 'type-badge ' + (currentType === 'truth' ? 'truth' : 'dare');
+  document.getElementById('questionText').textContent = question;
+
+  // Delay then flip
+  setTimeout(() => {
+    const card = document.getElementById('card');
+    card.classList.add('flipped');
+    playRevealSound();
+
+    // Update stats
+    roundCount++;
+    if (currentType === 'truth') truthCount++;
+    else dareCount++;
+    document.getElementById('roundNum').textContent = roundCount;
+    document.getElementById('truthCount').textContent = truthCount;
+    document.getElementById('dareCount').textContent = dareCount;
+
+    // Toast
+    const who = playerName;
+    showToast(`${who} ${currentType === 'truth' ? '💬 真心话时间！' : '⚡ 大冒险挑战！'}`);
+  }, 400);
+}
+
+// ===== Click card to flip back =====
+document.getElementById('card').addEventListener('click', function() {
+  if (isSpinning) return;
+  if (this.classList.contains('flipped')) {
+    this.classList.remove('flipped');
+  }
+});
+
+// ===== Keyboard support =====
+document.addEventListener('keydown', function(e) {
+  if (e.code === 'Space' || e.code === 'Enter') {
+    e.preventDefault();
+    const modal = document.getElementById('modalOverlay');
+    if (modal.style.display !== 'none') {
+      startGame();
+    } else if (!isSpinning) {
+      spinWheel();
+    }
+  }
+});
+
+// ===== Init =====
+drawWheel(0);
+</script>
+</body>
+</html>
